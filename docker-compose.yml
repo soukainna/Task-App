@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: taskdb
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 👈 ICI
+    networks:
+      - task-net
+
+  task-service:
+    build: ./task-service
+    container_name: task-service
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://taskuser:taskpass@db:5432/taskdb?sslmode=disable
+    depends_on:
+      - db
+    networks:
+      - task-net
+
+volumes:
+  pgdata:
+
+networks:
+  task-net:
+
