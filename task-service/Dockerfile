@@ -15,3 +15,4 @@ RUN chmod +x wait-for-it.sh
 EXPOSE 8080
 
 CMD ["./wait-for-it.sh", "mysql", "3306", "--", "./server"]
+
