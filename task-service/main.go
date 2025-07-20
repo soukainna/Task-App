@@ -3,20 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"task-service/database"
-	"task-service/handlers"
-
-	"github.com/gorilla/mux"
+	"task-service/models"
+	"task-service/routes"
 )
 
 func main() {
-	db := database.Connect()
-	defer db.Close()
+	database.Connect()
+	database.DB.AutoMigrate(&models.Task{})
 
-	r := mux.NewRouter()
-	r.HandleFunc("/tasks", handlers.GetTasks(db)).Methods("GET")
-	r.HandleFunc("/tasks", handlers.CreateTask(db)).Methods("POST")
+	port := getEnv("PORT", "8080")
+	log.Println("🚀 Serveur démarré sur le port", port)
+	log.Fatal(http.ListenAndServe(":"+port, routes.SetupRoutes()))
+}
 
-	log.Println("Task service listening on port 8080")
-	http.ListenAndServe(":8080", r)
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
