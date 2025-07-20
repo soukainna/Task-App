@@ -1,24 +1,37 @@
 package database
 
 import (
-	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
-	_ "github.com/lib/pq"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func Connect() *sql.DB {
-	connStr := os.Getenv("DATABASE_URL")
-	db, err := sql.Open("postgres", connStr)
+var DB *gorm.DB
+
+func Connect() {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+		getEnv("DB_USER", "root"),
+		getEnv("DB_PASS", "root"),
+		getEnv("DB_HOST", "mysql"),
+		getEnv("DB_PORT", "3306"),
+		getEnv("DB_NAME", "taskdb"),
+	)
+
+	var err error
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("❌ Erreur de connexion MySQL :", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Println("✅ Connexion MySQL réussie")
+}
 
-	return db
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
