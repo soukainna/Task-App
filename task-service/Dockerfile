@@ -1,23 +1,17 @@
-FROM golang:1.20
+FROM golang:1.21 AS builder
 
 WORKDIR /app
-
-COPY go.mod ./
-COPY go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server .
 
-# 👇 Installer netcat pour tester la connexion au port 5432
-RUN apt-get update && apt-get install -y netcat-openbsd
-
-# Compiler le binaire
-RUN go build -o task-service
-
-# Rendre le script exécutable
-RUN chmod +x wait-for.sh
-
+FROM alpine
+RUN apk add --no-cache bash netcat-openbsd
+WORKDIR /app
+COPY --from=builder /app/server .
+COPY wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
 EXPOSE 8080
 
-# Lancer l'app avec le script d'attente
-CMD ["./wait-for.sh"]
+CMD ["./wait-for-it.sh", "mysql", "3306", "--", "./server"]
