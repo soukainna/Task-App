@@ -9,6 +9,15 @@ services:
       MYSQL_DATABASE: taskdb
     ports:
       - "3307:3306"
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8081:80"
+    depends_on:
+      - task-service
+
 
   task-service:
     build: ./task-service
