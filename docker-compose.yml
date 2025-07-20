@@ -1,36 +1,24 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:14
-    container_name: postgres-db
+  mysql:
+    image: mysql:8
+    restart: always
     environment:
-      POSTGRES_DB: taskdb
-      POSTGRES_USER: taskuser
-      POSTGRES_PASSWORD: taskpass
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: taskdb
     ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 👈 ICI
-    networks:
-      - task-net
+      - "3307:3306"
 
   task-service:
     build: ./task-service
-    container_name: task-service
+    depends_on:
+      - mysql
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://taskuser:taskpass@db:5432/taskdb?sslmode=disable
-    depends_on:
-      - db
-    networks:
-      - task-net
-
-volumes:
-  pgdata:
-
-networks:
-  task-net:
-
+      DB_USER: root
+      DB_PASS: root
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: taskdb
